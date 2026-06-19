@@ -1,10 +1,12 @@
-# Guia de Deploy — Colocar o AgendaPro online com Railway
+# Guia de Deploy — Colocar o AgendaPro online
 
-**Railway é a opção mais simples e rápida.** Não precisas de configurar nada manualmente — ele deteta o Node.js, cria PostgreSQL automaticamente e faz o deploy.
+Escolhe a opção que tens disponível:
 
 ---
 
-## 🚄 Deploy no Railway (gratuito para começar)
+## 🚄 Opção 1: Railway (gratuito para começar — o mais fácil)
+
+**Railway é o mais rápido:** não precisas de configurar nada manualmente. Só ligar o GitHub.
 
 ### 1. Criar conta
 
@@ -142,6 +144,189 @@ No Railway, remove o plugin PostgreSQL e adiciona de novo. Depois corre o seed n
 
 ---
 
-## 🐳 Alternativa: Docker / VPS
+## 🌐 Opção 2: Hostinger VPS (se já tiveres alojamento)
 
-Se preferires controlo total, vê o [`docker-compose.yml`](docker-compose.yml) para correr com Docker.
+Hostinger partilhado (plano mais barato) **não funciona** — não tem Node.js nem PostgreSQL.
+
+Precisas de um **VPS** (KVM VPS a partir de ~5€/mês) ou **Cloud Hosting**.
+
+### 1. Aceder ao servidor
+
+No hPanel da Hostinger, vai a **"VPS" → "Manage"** e clica **"SSH Access"**. Copia o IP, utilizador e password.
+
+No teu computador, abre o terminal (PowerShell) e:
+
+```bash
+ssh root@IP_DO_TEU_VPS
+```
+
+(Cola o IP da Hostinger. Se pedir password, usa a que está no hPanel.)
+
+### 2. Instalar o necessário
+
+Dentro do servidor (já SSH), executa uma linha de cada vez:
+
+```bash
+# Atualizar pacotes
+apt update && apt upgrade -y
+
+# Instalar Node.js 18
+curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+apt install -y nodejs
+
+# Instalar PostgreSQL
+apt install -y postgresql postgresql-contrib
+
+# Instalar Git
+apt install -y git
+
+# Instalar PM2 (para manter o servidor sempre a correr)
+npm install -g pm2
+
+# Verificar versões
+node --version
+npm --version
+psql --version
+```
+
+### 3. Configurar PostgreSQL
+
+```bash
+# Iniciar PostgreSQL
+systemctl start postgresql
+systemctl enable postgresql
+
+# Criar base de dados
+sudo -u postgres psql -c "CREATE USER app_user WITH PASSWORD 'postgres123';"
+sudo -u postgres psql -c "CREATE DATABASE agenda_pro OWNER app_user;"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE agenda_pro TO app_user;"
+```
+
+### 4. Clonar o projeto e instalar
+
+```bash
+cd /var/www
+git clone https://github.com/crestionapps/agenda-pro-saas.git
+cd agenda-pro-saas/backend
+
+# Criar .env com a base de dados
+cat > .env << 'EOF'
+DATABASE_URL="postgresql://app_user:postgres123@localhost:5432/agenda_pro"
+JWT_SECRET="agendapro_secret_hostinger_2026"
+PORT=3001
+EOF
+
+# Instalar dependências e criar tabelas
+npm install
+npx prisma generate
+npx prisma db push
+
+# Inserir dados de exemplo
+npx tsx src/seed.ts
+
+# Compilar o TypeScript
+npm run build
+```
+
+### 5. Instalar frontend
+
+```bash
+cd /var/www/agenda-pro-saas/frontend
+npm install
+npm run build
+```
+
+### 6. Iniciar com PM2 (fica sempre a correr)
+
+```bash
+# Iniciar o servidor
+cd /var/www/agenda-pro-saas/backend
+pm2 start dist/server.js --name agenda-pro
+
+# Guardar a lista para iniciar automaticamente ao reiniciar
+pm2 save
+pm2 startup
+```
+
+### 7. (Opcional) Configurar Nginx + domínio
+
+Se quiseres aceder pelo teu domínio (ex: `agendapro.pt`) em vez de IP:3001:
+
+```bash
+apt install -y nginx
+```
+
+Depois cria o ficheiro de configuração:
+
+```bash
+cat > /etc/nginx/sites-available/agendapro << 'EOF'
+server {
+    listen 80;
+    server_name TEU-DOMINIO.pt;
+
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+EOF
+
+# Ativar o site
+ln -s /etc/nginx/sites-available/agendapro /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
+nginx -t
+systemctl restart nginx
+
+# Se tiveres domínio, instala SSL gratuito
+apt install -y certbot python3-certbot-nginx
+certbot --nginx -d TEU-DOMINIO.pt
+```
+
+### 8. Aceder
+
+- Sem domínio: `http://IP_DO_SERVIDOR:3001`
+- Com domínio: `http://TEU-DOMINIO.pt` (ou `https://` se instalaste SSL)
+
+### Comandos úteis para manter o servidor
+
+```bash
+pm2 logs            # Ver logs em tempo real
+pm2 status          # Ver se está a correr
+pm2 restart agenda-pro  # Reiniciar o servidor
+pm2 stop agenda-pro     # Parar o servidor
+```
+
+---
+
+## 🐳 Opção 3: Docker (qualquer VPS)
+
+Se preferires Docker em vez de instalar tudo manualmente:
+
+1. Instala Docker no VPS:
+   ```bash
+   curl -fsSL https://get.docker.com | bash
+   ```
+
+2. Clona o projeto:
+   ```bash
+   git clone https://github.com/crestionapps/agenda-pro-saas.git
+   cd agenda-pro-saas
+   ```
+
+3. Edita o `docker-compose.yml` — muda o `JWT_SECRET` para algo seguro.
+
+4. Inicia:
+   ```bash
+   docker compose up -d
+   ```
+
+5. Corre o seed:
+   ```bash
+   docker compose exec app npx tsx backend/src/seed.ts
+   ```
+
+6. Acede a `http://IP_DO_SERVIDOR`
