@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { authRouter } from './api/auth';
 import { tenantsRouter } from './api/tenants';
 import { professionalsRouter } from './api/professionals';
@@ -29,6 +30,12 @@ app.use('/api/notifications', notificationsRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
+});
+
+const frontendPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendPath));
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 app.use(errorHandler);
