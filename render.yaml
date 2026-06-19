@@ -17,4 +17,4 @@ services:
 databases:
   - name: agenda-pro-db
     databaseName: agenda_pro
-    user: postgres
+    user: postgre
