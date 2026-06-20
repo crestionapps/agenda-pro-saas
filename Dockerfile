@@ -13,8 +13,7 @@ COPY . .
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-req=ext-pcntl --ignore-platform-req=ext-sockets
 RUN mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions storage/framework/views storage/logs
-RUN php artisan config:cache && php artisan route:cache
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "php artisan migrate --force 2>&1 || true; php artisan db:seed --class=DatabaseSeeder --force 2>&1 || true; php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
+CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-8080} & php artisan migrate --force 2>&1 || true; php artisan db:seed --class=DatabaseSeeder --force 2>&1 || true; wait"]
