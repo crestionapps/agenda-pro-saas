@@ -3,7 +3,7 @@ services:
     name: agenda-pro
     env: php
     buildCommand: composer install --no-dev
-    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+    startCommand: php artisan migrate --force && php artisan db:seed --class=DatabaseSeeder --force && php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
       - key: APP_KEY
         generateValue: true

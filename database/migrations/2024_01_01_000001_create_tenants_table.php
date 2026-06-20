@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
-            $table->enum('type', ['barbershop', 'hairdresser', 'spa', 'nails', 'aesthetics', 'clinic']);
+            $table->string('type', 30);
             $table->text('description')->nullable();
             $table->string('address')->nullable();
             $table->string('phone')->nullable();

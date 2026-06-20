@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('date');
             $table->time('start_time');
             $table->time('end_time');
-            $table->enum('status', ['scheduled', 'confirmed', 'cancelled', 'completed', 'no_show'])->default('scheduled');
+            $table->string('status', 20)->default('scheduled');
             $table->text('notes')->nullable();
             $table->timestamps();
             $table->index('tenant_id');
