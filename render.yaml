@@ -1,20 +1,40 @@
 services:
   - type: web
     name: agenda-pro
-    env: node
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    env: php
+    buildCommand: composer install --no-dev
+    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
-      - key: NODE_VERSION
-        value: "18"
-      - key: DATABASE_URL
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
         fromDatabase:
           name: agenda-pro-db
-          property: connectionString
-      - key: JWT_SECRET
-        generateValue: true
-
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: agenda-pro-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: agenda-pro-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: agenda-pro-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: agenda-pro-db
+          property: password
 databases:
   - name: agenda-pro-db
     databaseName: agenda_pro
-    user: postgre
+    user: agenda_pro
+    plan: free
