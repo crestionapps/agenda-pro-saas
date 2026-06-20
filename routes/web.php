@@ -10,6 +10,9 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\AdminController;
 
+// Health check (for Railway)
+Route::get('/api/health', fn() => response()->json(['status' => 'ok']));
+
 // Public
 Route::get('/', [TenantController::class, 'home'])->name('home');
 Route::get('/negocio/{slug}', [TenantController::class, 'show'])->name('tenant.show');
