@@ -11,7 +11,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN composer install --no-dev --optimize --no-interaction --ignore-platform-req=ext-pcntl
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-req=ext-pcntl --ignore-platform-req=ext-sockets
 RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
 
 EXPOSE 8080
