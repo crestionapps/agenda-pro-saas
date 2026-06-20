@@ -5,6 +5,8 @@ RUN docker-php-ext-install pdo_mysql pdo_pgsql
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
 WORKDIR /app
 
 COPY composer.json ./
@@ -12,7 +14,7 @@ RUN composer install --no-dev --no-scripts --no-autoloader
 
 COPY . .
 
-RUN composer install --no-dev --optimize
+RUN composer install --no-dev --optimize --no-interaction
 RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
 
 EXPOSE 8080

@@ -16,6 +16,16 @@
             "Database\\Seeders\\": "database/seeders/"
         }
     },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        },
+        "policy": {
+            "advisories": {
+                "block": false
+            }
+        }
+    },
     "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump"
