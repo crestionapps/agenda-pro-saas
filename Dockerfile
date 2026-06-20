@@ -9,12 +9,9 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 
 WORKDIR /app
 
-COPY composer.json ./
-RUN composer install --no-dev --no-scripts --no-autoloader
-
 COPY . .
 
-RUN composer install --no-dev --optimize --no-interaction
+RUN composer install --no-dev --optimize --no-interaction --ignore-platform-req=ext-pcntl
 RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
 
 EXPOSE 8080
